@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+export RESTIC_REPOSITORY="{{ restic_repo }}"
+export RESTIC_PASSWORD_FILE="{{ restic_password_file }}"
+/usr/bin/restic backup {{ restic_backup_paths | join(' ') }} --tag ansible
+/usr/bin/restic forget --keep-daily 7 --keep-weekly 4 --prune

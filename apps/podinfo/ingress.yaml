@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: podinfo
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: traefik
+  rules:
+    # shortcut: host placeholder, setear al tener dominio en Cloudflare (o <IP>.nip.io para probar)
+    - host: podinfo.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: podinfo
+                port:
+                  number: 9898
+  tls:
+    - hosts:
+        - podinfo.example.com
+      secretName: podinfo-tls

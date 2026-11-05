@@ -1,0 +1,6 @@
+---
+restic_repo: ""
+restic_password_file: /etc/restic/passwd
+restic_backup_paths:
+  - /etc/rancher
+  - /var/lib/rancher/k3s/server/db

@@ -1,0 +1,32 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: velero
+  namespace: velero
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: velero
+      version: "12.2.3"
+      sourceRef:
+        kind: HelmRepository
+        name: vmware-tanzu
+        namespace: flux-system
+  values:
+    # shortcut: REPLACE_ME (bucket, region, s3Url) se llena al crear el bucket en Oracle Object Storage
+    deployNodeAgent: true
+    credentials:
+      existingSecret: velero-oci
+    configuration:
+      backupStorageLocation:
+        - name: oci
+          provider: aws
+          bucket: REPLACE_ME
+          credential:
+            name: velero-oci
+            key: cloud
+          config:
+            region: REPLACE_ME
+            s3Url: https://compatibility-objectstorage.REPLACE_ME.oraclecloud.com
+            s3ForcePathStyle: "true"

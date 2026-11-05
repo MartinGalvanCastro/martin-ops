@@ -1,0 +1,6 @@
+kube/
+.terraform/
+*.tfstate*
+infra/ansible/inventory/hosts.ini
+*.tfvars
+.senpi/
