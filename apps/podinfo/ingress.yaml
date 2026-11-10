@@ -7,8 +7,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    # shortcut: host placeholder, setear al tener dominio en Cloudflare (o <IP>.nip.io para probar)
-    - host: podinfo.example.com
+    - host: podinfo.realeflow.cloud
       http:
         paths:
           - path: /
@@ -20,5 +19,5 @@ spec:
                   number: 9898
   tls:
     - hosts:
-        - podinfo.example.com
+        - podinfo.realeflow.cloud
       secretName: podinfo-tls

@@ -46,6 +46,6 @@ Stack: Terraform → Oracle VM A1.Flex (Ubuntu 24.04) → Ansible (Tailscale + k
   - `infrastructure/velero/secrets/velero-oci.sops.yaml`: Customer Secret Key de OCI (S3) de un usuario con acceso solo a los buckets de backup.
 - Velero: para respaldar volúmenes de un pod, anotación `backup.velero.io/backup-volumes=<volumen>`.
 - restic (backup de k3s: SQLite + TLS + token): `restic_repo`, `restic_password` y `restic_env` en Ansible.
-- Host del ingress de podinfo (`apps/podinfo/ingress.yaml`) al tener dominio.
+- DNS en Cloudflare: registro A `podinfo.realeflow.cloud` (o `*.realeflow.cloud`) → IP pública de la VM (`terraform output public_ip`).
 - Runners self-hosted (ARC) para los otros repos.
 - Object Storage Always Free: 20 GB en total entre los buckets.
