@@ -105,7 +105,7 @@ resource "oci_core_subnet" "main" {
 }
 
 resource "oci_core_instance" "k3s" {
-  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
+  availability_domain = data.oci_identity_availability_domains.ads.availability_domains[var.availability_domain_index].name
   compartment_id      = local.compartment_ocid
   display_name        = "${var.cluster_name}-k3s"
   shape               = "VM.Standard.A1.Flex"
@@ -149,9 +149,7 @@ resource "oci_core_instance" "k3s" {
   }
 }
 
-data "oci_objectstorage_namespace" "ns" {
-  compartment_id = var.tenancy_ocid
-}
+data "oci_objectstorage_namespace" "ns" {}
 
 # Buckets de backup (privados). El del tfstate se crea fuera de Terraform: ver README.
 resource "oci_objectstorage_bucket" "backup" {

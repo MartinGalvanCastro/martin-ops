@@ -7,3 +7,4 @@ infra/ansible/inventory/hosts.ini
 # Notas locales del harness y estado de herramientas: no van al repo público
 .omc/
 CONTEXT.md
+tfplan*

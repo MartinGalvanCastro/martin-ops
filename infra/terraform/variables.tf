@@ -60,3 +60,9 @@ variable "cluster_name" {
   default     = "martin-ops"
   description = "Prefijo de nombres de recursos."
 }
+
+variable "availability_domain_index" {
+  type        = number
+  default     = 0
+  description = "AD de la VM (0, 1, 2). Cambiarlo si Oracle responde \"Out of host capacity\"."
+}
