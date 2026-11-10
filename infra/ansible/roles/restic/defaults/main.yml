@@ -1,6 +1,13 @@
 ---
+# Vacío = rol desactivado. Bucket de Terraform: s3:https://axvmef9kdxvh.compat.objectstorage.us-chicago-1.oraclecloud.com/martin-ops-restic
 restic_repo: ""
+restic_password: ""
 restic_password_file: /etc/restic/passwd
+# Credenciales del backend, ej. AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (Customer Secret Key de OCI).
+restic_env: {}
 restic_backup_paths:
   - /etc/rancher
-  - /var/lib/rancher/k3s/server/db
+  - /var/lib/rancher/k3s/server/tls
+  - /var/lib/rancher/k3s/server/token
+  # Copia consistente de la SQLite que genera backup.sh (no la DB en uso).
+  - /var/backups/k3s

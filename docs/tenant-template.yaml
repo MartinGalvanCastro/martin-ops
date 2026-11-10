@@ -1,0 +1,83 @@
+# Generado por `make tenant`. Todo lo del repo de la app se aplica con el ServiceAccount "flux",
+# que solo es admin dentro de su namespace.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: __NAME__
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux
+  namespace: __NAME__
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux
+  namespace: __NAME__
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+  - kind: ServiceAccount
+    name: flux
+    namespace: __NAME__
+---
+# Un solo nodo compartido: tope para que una app no se coma la VM.
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant
+  namespace: __NAME__
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 2Gi
+    limits.memory: 4Gi
+    persistentvolumeclaims: "4"
+---
+# Defaults para pods sin requests/limits (la quota los exige).
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tenant
+  namespace: __NAME__
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 50m
+        memory: 64Mi
+      default:
+        memory: 256Mi
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: __NAME__
+  namespace: __NAME__
+spec:
+  interval: 5m
+  url: __REPO__
+  ref:
+    branch: main
+  # Repo privado: deploy key de solo lectura en un Secret SOPS (ver docs/tenants.md).
+  # secretRef:
+  #   name: __NAME__-git
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: __NAME__
+  namespace: __NAME__
+spec:
+  interval: 10m
+  path: ./deploy
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: __NAME__
+  serviceAccountName: flux
+  targetNamespace: __NAME__

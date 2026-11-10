@@ -1,0 +1,25 @@
+# Flux aplica Namespaces antes que el resto, así los HelmRelease y secrets ya tienen dónde vivir.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traefik
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: keda
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: velero

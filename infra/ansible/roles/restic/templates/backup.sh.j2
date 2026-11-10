@@ -1,6 +1,8 @@
 #!/bin/sh
-set -e
-export RESTIC_REPOSITORY="{{ restic_repo }}"
-export RESTIC_PASSWORD_FILE="{{ restic_password_file }}"
+set -eu
+set -a; . /etc/restic/env; set +a
+# Copiar state.db en uso puede dar un backup corrupto: sqlite3 .backup hace una copia consistente.
+mkdir -p /var/backups/k3s
+sqlite3 /var/lib/rancher/k3s/server/db/state.db ".backup /var/backups/k3s/state.db"
 /usr/bin/restic backup {{ restic_backup_paths | join(' ') }} --tag ansible
 /usr/bin/restic forget --keep-daily 7 --keep-weekly 4 --prune

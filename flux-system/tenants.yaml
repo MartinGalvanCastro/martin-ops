@@ -1,0 +1,20 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: tenants
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./tenants
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  timeout: 5m
+  dependsOn:
+    - name: infrastructure-configs
+  # Para deploy keys de repos privados cifradas con SOPS (tenants/<app>-git.sops.yaml).
+  decryption:
+    provider: sops
+    secretRef:
+      name: sops-age

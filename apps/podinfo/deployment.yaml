@@ -14,9 +14,25 @@ spec:
       labels:
         app: podinfo
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: data
+          emptyDir: {}
       containers:
         - name: podinfo
           image: ghcr.io/stefanprodan/podinfo:6.11.0
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /data
           ports:
             - containerPort: 9898
           resources:

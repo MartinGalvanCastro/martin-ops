@@ -14,15 +14,49 @@ spec:
         name: prometheus-community
         namespace: flux-system
   values:
+    # k3s corre controller-manager, scheduler, proxy y la DB dentro del mismo proceso: no hay endpoints
+    # que scrapear y sus alertas "Down" sonarían siempre.
+    kubeControllerManager:
+      enabled: false
+    kubeScheduler:
+      enabled: false
+    kubeProxy:
+      enabled: false
+    kubeEtcd:
+      enabled: false
     prometheus:
       prometheusSpec:
-        retention: 3d
+        retention: 15d
+        retentionSize: 18GB
+        storageSpec:
+          volumeClaimTemplate:
+            spec:
+              accessModes: ["ReadWriteOnce"]
+              resources:
+                requests:
+                  storage: 20Gi
         resources:
           requests:
             cpu: 200m
             memory: 768Mi
     alertmanager:
+      config:
+        route:
+          receiver: discord
+          group_by: [alertname, namespace]
+          routes:
+            # Watchdog (alerta que siempre suena) e InfoInhibitor no van a Discord.
+            - receiver: "null"
+              matchers: ['alertname =~ "Watchdog|InfoInhibitor"']
+        receivers:
+          - name: "null"
+          - name: discord
+            discord_configs:
+              - webhook_url_file: /etc/alertmanager/secrets/alertmanager-discord/webhook-url
+                send_resolved: true
       alertmanagerSpec:
+        # Monta el Secret en /etc/alertmanager/secrets/alertmanager-discord/
+        secrets: [alertmanager-discord]
         resources:
           requests:
             cpu: 50m
@@ -32,6 +66,13 @@ spec:
         existingSecret: grafana-admin
         userKey: admin-user
         passwordKey: admin-password
+      additionalDataSources:
+        - name: Loki
+          type: loki
+          url: http://loki.monitoring.svc:3100
+        - name: Tempo
+          type: tempo
+          url: http://tempo.monitoring.svc:3200
       resources:
         requests:
           cpu: 100m

@@ -4,3 +4,6 @@ kube/
 infra/ansible/inventory/hosts.ini
 *.tfvars
 .senpi/
+# Notas locales del harness y estado de herramientas: no van al repo público
+.omc/
+CONTEXT.md

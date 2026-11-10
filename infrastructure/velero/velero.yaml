@@ -14,7 +14,15 @@ spec:
         name: vmware-tanzu
         namespace: flux-system
   values:
-    # shortcut: REPLACE_ME (bucket, region, s3Url) se llena al crear el bucket en Oracle Object Storage
+    # provider aws = API S3-compatible de OCI; la versión del plugin sigue a Velero (1.18 -> v1.14).
+    initContainers:
+      - name: velero-plugin-for-aws
+        image: velero/velero-plugin-for-aws:v1.14.4
+        volumeMounts:
+          - mountPath: /target
+            name: plugins
+    # Sin VolumeSnapshotLocation: los volúmenes se respaldan con fs-backup del node-agent (opt-in por pod).
+    snapshotsEnabled: false
     deployNodeAgent: true
     credentials:
       existingSecret: velero-oci
@@ -22,11 +30,19 @@ spec:
       backupStorageLocation:
         - name: oci
           provider: aws
-          bucket: REPLACE_ME
+          default: true
+          bucket: martin-ops-velero # Terraform: oci_objectstorage_bucket.backup
           credential:
             name: velero-oci
             key: cloud
           config:
-            region: REPLACE_ME
-            s3Url: https://compatibility-objectstorage.REPLACE_ME.oraclecloud.com
+            region: us-chicago-1
+            s3Url: https://axvmef9kdxvh.compat.objectstorage.us-chicago-1.oraclecloud.com
             s3ForcePathStyle: "true"
+            # OCI rechaza los checksums por defecto del SDK v2 de AWS.
+            checksumAlgorithm: ""
+    schedules:
+      daily:
+        schedule: "0 3 * * *"
+        template:
+          ttl: 168h0m0s

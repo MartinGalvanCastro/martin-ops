@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "flux": {
+    "managerFilePatterns": ["/^(infrastructure|apps|flux-system|tenants)/.+\\.ya?ml$/"]
+  },
+  "kubernetes": {
+    "managerFilePatterns": ["/^(infrastructure|apps)/.+\\.ya?ml$/"]
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Versión de k3s en el rol de Ansible",
+      "managerFilePatterns": ["/^infra/ansible/roles/k3s/defaults/main\\.yml$/"],
+      "matchStrings": ["k3s_version: (?<currentValue>\\S+)"],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "k3s-io/k3s",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Majors de charts y k3s: revisar a mano antes de mergear",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

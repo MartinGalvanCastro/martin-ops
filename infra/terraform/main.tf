@@ -47,25 +47,19 @@ resource "oci_core_security_list" "main" {
   vcn_id         = oci_core_vcn.main.id
   display_name   = "${var.cluster_name}-sl"
 
-  ingress_security_rules {
-    description = "SSH"
-    protocol    = "6"
-    source      = var.admin_cidr
-    source_type = "CIDR_BLOCK"
-    tcp_options {
-      min = 22
-      max = 22
-    }
-  }
-
-  ingress_security_rules {
-    description = "k3s API (solo admin)"
-    protocol    = "6"
-    source      = var.admin_cidr
-    source_type = "CIDR_BLOCK"
-    tcp_options {
-      min = 6443
-      max = 6443
+  # SSH público solo si admin_cidr != "" (bootstrap, antes de Tailscale). La API k3s nunca es pública:
+  # el kubeconfig apunta a la IP de Tailscale.
+  dynamic "ingress_security_rules" {
+    for_each = var.admin_cidr != "" ? [var.admin_cidr] : []
+    content {
+      description = "SSH (solo bootstrap)"
+      protocol    = "6"
+      source      = ingress_security_rules.value
+      source_type = "CIDR_BLOCK"
+      tcp_options {
+        min = 22
+        max = 22
+      }
     }
   }
 
@@ -88,17 +82,6 @@ resource "oci_core_security_list" "main" {
     tcp_options {
       min = 443
       max = 443
-    }
-  }
-
-  ingress_security_rules {
-    description = "Flannel VXLAN intra-VCN"
-    protocol    = "17"
-    source      = "10.0.0.0/16"
-    source_type = "CIDR_BLOCK"
-    udp_options {
-      min = 8472
-      max = 8472
     }
   }
 
@@ -156,4 +139,26 @@ resource "oci_core_instance" "k3s" {
     project    = var.cluster_name
     managed-by = "terraform"
   }
+
+  lifecycle {
+    # La VM tiene el estado de k3s: cualquier plan que la destruya debe fallar.
+    # Para borrarla a propósito, quitar esta línea primero.
+    prevent_destroy = true
+    # Imagen "más nueva" y llaves SSH solo importan al crear; sin esto, una imagen nueva de Ubuntu recrea la VM.
+    ignore_changes = [source_details[0].source_id, metadata]
+  }
+}
+
+data "oci_objectstorage_namespace" "ns" {
+  compartment_id = var.tenancy_ocid
+}
+
+# Buckets de backup (privados). El del tfstate se crea fuera de Terraform: ver README.
+resource "oci_objectstorage_bucket" "backup" {
+  for_each       = toset(["velero", "restic"])
+  compartment_id = local.compartment_ocid
+  namespace      = data.oci_objectstorage_namespace.ns.namespace
+  name           = "${var.cluster_name}-${each.key}"
+  access_type    = "NoPublicAccess"
+  freeform_tags  = { project = var.cluster_name, managed-by = "terraform" }
 }

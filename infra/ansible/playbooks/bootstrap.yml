@@ -3,5 +3,6 @@
   hosts: k3s
   become: true
   roles:
+    - tailscale
     - k3s
     - restic

@@ -1,0 +1,5 @@
+# Recursos que usan CRDs instaladas por los charts de ../ (por eso van en una Kustomization aparte).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - cluster-issuers.yaml

@@ -16,6 +16,13 @@ spec:
   values:
     deploymentMode: SingleBinary
     loki:
+      # Un solo tenant: sin esto Alloy necesita header X-Scope-OrgID.
+      auth_enabled: false
+      limits_config:
+        retention_period: 168h
+      compactor:
+        retention_enabled: true
+        delete_request_store: filesystem
       commonConfig:
         replication_factor: 1
       schemaConfig:
@@ -32,11 +39,17 @@ spec:
     singleBinary:
       replicas: 1
       persistence:
-        enabled: false
+        enabled: true
+        size: 20Gi
       resources:
         requests:
           cpu: 50m
           memory: 512Mi
+    # memcached del chart pide ~8 GB por defecto; innecesario en un nodo.
+    chunksCache:
+      enabled: false
+    resultsCache:
+      enabled: false
     read:
       replicas: 0
     write:

@@ -1,22 +1,75 @@
 ---
-- name: Flush Oracle default iptables INPUT rules (bloquean tráfico de k3s)
-  ansible.builtin.command: /usr/sbin/iptables -F INPUT
-  changed_when: true
+# La imagen Ubuntu de Oracle trae INPUT con REJECT al final (solo deja SSH) y FORWARD con REJECT.
+# En vez de vaciar el firewall, se abre solo lo necesario.
+- name: Permitir en INPUT Tailscale, HTTP/S y redes de pods/servicios
+  ansible.builtin.iptables:
+    chain: INPUT
+    action: insert
+    jump: ACCEPT
+    comment: "{{ item.comment }}"
+    in_interface: "{{ item.iface | default(omit) }}"
+    protocol: "{{ item.proto | default(omit) }}"
+    destination_port: "{{ item.port | default(omit) }}"
+    source: "{{ item.src | default(omit) }}"
+  loop:
+    - { comment: tailscale, iface: tailscale0 }
+    - { comment: http, proto: tcp, port: "80" }
+    - { comment: https, proto: tcp, port: "443" }
+    - { comment: k3s-pods, src: 10.42.0.0/16 }
+    - { comment: k3s-services, src: 10.43.0.0/16 }
+  register: k3s_fw_input
 
-- name: Persist iptables vacío
+# El tráfico a pods (servicelb, hostPort) pasa por FORWARD: ese REJECT lo cortaría. k3s maneja FORWARD.
+- name: Quitar REJECT de FORWARD de la imagen Oracle
+  ansible.builtin.iptables:
+    chain: FORWARD
+    jump: REJECT
+    reject_with: icmp-host-prohibited
+    state: absent
+  register: k3s_fw_forward
+
+- name: Persistir reglas del firewall
   ansible.builtin.command: /usr/sbin/netfilter-persistent save
+  when: k3s_fw_input is changed or k3s_fw_forward is changed
   changed_when: true
 
-- name: Instalar k3s sin traefik
+- name: Directorio de configuración de k3s
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    mode: "0755"
+
+- name: Configuración de k3s
+  ansible.builtin.copy:
+    dest: /etc/rancher/k3s/config.yaml
+    mode: "0600"
+    content: |
+      disable:
+        - traefik
+      write-kubeconfig-mode: "0600"
+      tls-san:
+        - {{ tailscale_ip }}
+  notify: Reiniciar k3s
+
+- name: Versión instalada de k3s
+  ansible.builtin.command: /usr/local/bin/k3s --version
+  register: k3s_installed
+  changed_when: false
+  failed_when: false
+
+- name: Instalar o actualizar k3s
   ansible.builtin.shell: |
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode 644" sh -
+    set -o pipefail
+    curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version | quote }} sh -
   args:
-    creates: /usr/local/bin/k3s
+    executable: /bin/bash
+  when: k3s_version not in (k3s_installed.stdout | default(''))
+  changed_when: true
 
 - name: Esperar node ready
-  ansible.builtin.command: k3s kubectl get --raw /readyz
-  register: readyz
-  until: readyz.rc == 0
+  ansible.builtin.command: /usr/local/bin/k3s kubectl get --raw /readyz
+  register: k3s_readyz
+  until: k3s_readyz.rc == 0
   retries: 30
   delay: 5
   changed_when: false
@@ -24,13 +77,14 @@
 - name: Fetch kubeconfig
   ansible.builtin.fetch:
     src: /etc/rancher/k3s/k3s.yaml
-    dest: "{{ playbook_dir }}/../../kube/kubeconfig"
+    dest: "{{ playbook_dir }}/../../../kube/kubeconfig"
     flat: true
 
-- name: Apuntar kubeconfig a la IP pública
+- name: Apuntar kubeconfig a la IP de Tailscale
   ansible.builtin.replace:
-    path: "{{ playbook_dir }}/../../kube/kubeconfig"
+    path: "{{ playbook_dir }}/../../../kube/kubeconfig"
     regexp: '127\.0\.0\.1'
-    replace: "{{ hostvars[inventory_hostname].ansible_host }}"
+    replace: "{{ tailscale_ip }}"
+    mode: "0600"
   delegate_to: localhost
   become: false

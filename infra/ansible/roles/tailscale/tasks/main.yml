@@ -1,0 +1,35 @@
+---
+- name: Instalar Tailscale
+  ansible.builtin.shell: |
+    set -o pipefail
+    curl -fsSL https://tailscale.com/install.sh | sh
+  args:
+    executable: /bin/bash
+    creates: /usr/bin/tailscale
+
+- name: Ver si el nodo ya está en el tailnet
+  ansible.builtin.command: tailscale ip -4
+  register: tailscale_status
+  changed_when: false
+  failed_when: false
+
+- name: Exigir auth key si el nodo no está en el tailnet
+  ansible.builtin.assert:
+    that: tailscale_authkey | length > 0
+    fail_msg: "Exporta TAILSCALE_AUTHKEY (tskey-auth-...) antes de correr el playbook."
+  when: tailscale_status.rc != 0
+
+- name: Unir el nodo al tailnet
+  ansible.builtin.command: tailscale up --authkey={{ tailscale_authkey }} --hostname={{ tailscale_hostname }}
+  no_log: true
+  when: tailscale_status.rc != 0
+  changed_when: true
+
+- name: Leer IP de Tailscale
+  ansible.builtin.command: tailscale ip -4
+  register: tailscale_ip_cmd
+  changed_when: false
+
+- name: Guardar IP de Tailscale para k3s
+  ansible.builtin.set_fact:
+    tailscale_ip: "{{ tailscale_ip_cmd.stdout | trim }}"

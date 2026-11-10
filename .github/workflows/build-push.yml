@@ -12,21 +12,24 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm # ARM64 = arquitectura de la VM A1
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Tag inmutable y ordenable (main-<sha7>-<epoch>): lo usa ImagePolicy de Flux (docs/tenants.md).
       - name: Build and push apps with Dockerfile
         run: |
+          tag="main-${GITHUB_SHA::7}-$(date +%s)"
           for df in apps/*/Dockerfile; do
             [ -f "$df" ] || continue
             app=$(dirname "$df" | cut -d/ -f2)
-            image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$app"
-            docker build -t "$image:latest" -t "$image:${GITHUB_SHA::12}" "$(dirname "$df")"
-            docker push "$image:latest"
-            docker push "$image:${GITHUB_SHA::12}"
+            image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/$app:$tag"
+            docker build -t "$image" "$(dirname "$df")"
+            docker push "$image"
           done

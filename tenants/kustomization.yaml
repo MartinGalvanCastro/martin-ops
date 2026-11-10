@@ -1,0 +1,4 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Una app de otro repo = un archivo aquí. Alta: make tenant NAME=<app> REPO=<url> (ver docs/tenants.md).
+resources: []

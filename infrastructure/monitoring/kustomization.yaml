@@ -4,4 +4,6 @@ resources:
   - kube-prometheus-stack.yaml
   - loki.yaml
   - tempo.yaml
+  - alloy.yaml
   - secrets/grafana-admin.sops.yaml
+  - secrets/alertmanager-discord.sops.yaml

@@ -1,4 +1,4 @@
-# Flujo de secrets (SOPS + age + Flux + ESO)
+# Flujo de secrets (SOPS + age + Flux)
 
 ## Estado
 
@@ -8,6 +8,7 @@
   - `infrastructure/cert-manager/secrets/cloudflare-api-token.sops.yaml` (placeholder `REPLACE_ME` → token de Cloudflare para DNS-01)
   - `infrastructure/monitoring/secrets/grafana-admin.sops.yaml` (admin/password reales)
   - `infrastructure/velero/secrets/velero-oci.sops.yaml` (placeholder → credenciales S3 de Oracle Object Storage)
+  - `infrastructure/monitoring/secrets/alertmanager-discord.sops.yaml` (placeholder → URL del webhook de Discord)
 
 ## Editar un secret
 
@@ -18,6 +19,6 @@ git add ... && git commit
 
 Flux lo reconcilia en ≤10 min (o `flux reconcile kustomization infrastructure --with-source`).
 
-## External Secrets Operator
+## Por qué no External Secrets Operator
 
-ESO está instalado (`infrastructure/external-secrets/`). Para backends externos (1Password, Vault, etc.) ver ejemplo en `examples/external-secrets.yaml`; ese directorio no lo reconcilia Flux: copiar al componente correspondiente cuando exista el backend.
+Flux ya descifra SOPS al aplicar; ESO no lee SOPS y solo sirve con un backend externo (Vault, 1Password...). Si algún día hay uno, se instala entonces.

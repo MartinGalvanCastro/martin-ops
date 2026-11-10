@@ -20,4 +20,5 @@ spec:
           cpu: 50m
           memory: 384Mi
     persistence:
-      enabled: false
+      enabled: true
+      size: 10Gi

@@ -1,0 +1,4 @@
+---
+# Auth key de un solo uso (tskey-auth-...): se pasa por entorno, nunca al repo.
+tailscale_authkey: "{{ lookup('env', 'TAILSCALE_AUTHKEY') }}"
+tailscale_hostname: martin-ops-k3s
