@@ -1,0 +1,8 @@
+[Unit]
+Description=Cost guard OCI (aviso a Discord y apagado si hay gasto)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/cost-guard

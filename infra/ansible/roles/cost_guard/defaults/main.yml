@@ -1,0 +1,8 @@
+---
+# Gasto del mes (USD de la cuenta) por encima de esto => aviso a Discord y SOFTSTOP de las VMs.
+# Always Free debe dar 0: cualquier cargo real dispara.
+cost_guard_limit: "0.01"
+cost_guard_tenancy_ocid: "{{ lookup('env', 'OCI_TENANCY_OCID') }}"
+cost_guard_compartment_ocid: "{{ lookup('env', 'OCI_COMPARTMENT_OCID') }}"
+# El Makefile lo saca del Secret SOPS de Alertmanager (una sola fuente).
+cost_guard_discord_webhook: "{{ lookup('env', 'DISCORD_WEBHOOK') }}"

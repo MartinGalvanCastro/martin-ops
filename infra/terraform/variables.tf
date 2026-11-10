@@ -66,3 +66,14 @@ variable "availability_domain_index" {
   default     = 0
   description = "AD de la VM (0, 1, 2). Cambiarlo si Oracle responde \"Out of host capacity\"."
 }
+
+variable "budget_amount" {
+  type        = number
+  default     = 1
+  description = "Budget mensual en la moneda de la cuenta. Lo esperado es 0 (Always Free)."
+}
+
+variable "alert_email" {
+  type        = string
+  description = "Email para las alertas del budget (va en terraform.tfvars, no en el repo)."
+}

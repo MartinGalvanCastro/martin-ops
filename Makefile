@@ -21,8 +21,14 @@ inventory:
 	printf '[k3s]\n%s ansible_user=ubuntu\n' "$$ip" > infra/ansible/inventory/hosts.ini; \
 	cat infra/ansible/inventory/hosts.ini
 
+# Secrets por entorno, nunca en disco: webhook desde SOPS, auth key de Tailscale desde su archivo 600.
 ansible:
-	cd infra/ansible && ~/.venvs/ops/bin/ansible-playbook playbooks/bootstrap.yml
+	cd infra/ansible && \
+	DISCORD_WEBHOOK="$$(sops -d --extract '["stringData"]["webhook-url"]' ../../infrastructure/monitoring/secrets/alertmanager-discord.sops.yaml)" \
+	OCI_TENANCY_OCID="$$(terraform -chdir=../terraform output -raw tenancy_ocid)" \
+	OCI_COMPARTMENT_OCID="$$(terraform -chdir=../terraform output -raw compartment_ocid)" \
+	TAILSCALE_AUTHKEY="$${TAILSCALE_AUTHKEY:-$$(cat ~/.config/martin-ops-tailscale-authkey 2>/dev/null)}" \
+	~/.venvs/ops/bin/ansible-playbook playbooks/bootstrap.yml
 
 # Image automation: los repos de apps (tenants) actualizan sus tags con ImagePolicy + ImageUpdateAutomation.
 bootstrap: inventory ansible

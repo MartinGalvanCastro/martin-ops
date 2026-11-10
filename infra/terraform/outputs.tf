@@ -32,3 +32,13 @@ output "s3_endpoint" {
   description = "Endpoint S3-compatible de OCI para Velero y restic."
   value       = "https://${data.oci_objectstorage_namespace.ns.namespace}.compat.objectstorage.${var.region}.oraclecloud.com"
 }
+
+output "tenancy_ocid" {
+  description = "OCID de la tenancy (lo usa el cost guard)."
+  value       = var.tenancy_ocid
+}
+
+output "compartment_ocid" {
+  description = "Compartment de martin-ops (el cost guard apaga sus VMs)."
+  value       = local.compartment_ocid
+}

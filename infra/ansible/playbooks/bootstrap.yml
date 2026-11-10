@@ -4,5 +4,6 @@
   become: true
   roles:
     - tailscale
+    - cost_guard
     - k3s
     - restic

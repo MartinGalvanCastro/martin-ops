@@ -1,0 +1,60 @@
+---
+- name: Exigir datos del cost guard
+  ansible.builtin.assert:
+    that:
+      - cost_guard_tenancy_ocid is match('ocid1.tenancy.')
+      - cost_guard_compartment_ocid is match('ocid1.compartment.')
+      - cost_guard_discord_webhook is match('https://discord.com/api/webhooks/')
+    fail_msg: "Faltan OCI_TENANCY_OCID, OCI_COMPARTMENT_OCID o DISCORD_WEBHOOK (usar make ansible)."
+
+- name: Instalar python3-venv
+  ansible.builtin.apt:
+    name: python3-venv
+    state: present
+    update_cache: true
+
+- name: Instalar OCI CLI en venv propio
+  ansible.builtin.pip:
+    name: oci-cli
+    virtualenv: /opt/cost-guard
+    virtualenv_command: python3 -m venv
+
+- name: Directorio de configuración
+  ansible.builtin.file:
+    path: /etc/cost-guard
+    state: directory
+    mode: "0700"
+
+- name: Entorno del cost guard
+  ansible.builtin.template:
+    src: env.j2
+    dest: /etc/cost-guard/env
+    mode: "0600"
+  no_log: true
+
+- name: Script del cost guard
+  ansible.builtin.copy:
+    src: cost-guard.sh
+    dest: /usr/local/sbin/cost-guard
+    mode: "0700"
+
+- name: Servicio y timer
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - cost-guard.service
+    - cost-guard.timer
+
+- name: Activar timer
+  ansible.builtin.systemd_service:
+    name: cost-guard.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+
+# Falla acá si el dynamic group o sus policies faltan: mejor enterarse ahora que el día que haya gasto.
+- name: Probar el cost guard una vez
+  ansible.builtin.command: /usr/local/sbin/cost-guard --check
+  changed_when: false
