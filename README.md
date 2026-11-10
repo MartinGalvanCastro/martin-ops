@@ -49,3 +49,16 @@ Stack: Terraform → Oracle VM A1.Flex (Ubuntu 24.04) → Ansible (Tailscale + k
 - DNS en Cloudflare: registro A `podinfo.realeflow.cloud` (o `*.realeflow.cloud`) → IP pública de la VM (`terraform output public_ip`).
 - Runners self-hosted (ARC) para los otros repos.
 - Object Storage Always Free: 20 GB en total entre los buckets.
+
+## Emergencia de costos (manual)
+
+Si llega una alerta (email del budget o 🚨 en Discord) y el cost guard no apagó todo:
+
+1. Apagar la VM (no `Terminate`: borra el disco):
+   - Consola: Compute → Instances → `martin-ops-k3s` → **Stop** → Force stop.
+   - CLI: `oci compute instance action --action STOP --instance-id $(terraform -chdir=infra/terraform output -raw instance_ocid)`
+2. Ver qué cobra: Billing → **Cost Analysis**, agrupar por *Service* y *Resource*.
+3. Si es algo fuera de la VM: Governance → **Tenancy Explorer** (compartment raíz, con subcompartments) para encontrarlo y borrarlo.
+4. Estado del guard en la VM: `systemctl list-timers cost-guard.timer` y `journalctl -u cost-guard`.
+
+Los datos de costo llegan con horas de retraso: tras apagar, el gasto puede seguir subiendo un rato en Cost Analysis.
