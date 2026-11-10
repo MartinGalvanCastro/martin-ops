@@ -8,6 +8,18 @@ Cada app vive en su propio repo y se registra aquí con un archivo. Flux la desp
 2. Aquí: `make tenant NAME=mi-app REPO=https://github.com/OWNER/mi-app` → revisar `tenants/mi-app.yaml` → commit + push.
 3. Flux crea el namespace `mi-app`, su quota y aplica `deploy/` cada 10 min (`flux get kustomizations -n mi-app`).
 
+### Monorepo (varias apps en un repo)
+
+Un tenant por app, mismo `REPO`, distinto `DIR`. Cada app queda en su namespace con su quota:
+
+```
+make tenant NAME=api REPO=https://github.com/OWNER/mono DIR=./apps/api/deploy
+make tenant NAME=web REPO=https://github.com/OWNER/mono DIR=./apps/web/deploy
+```
+
+Cada tenant clona el repo por separado (barato). Un push que solo toca `apps/web/` no cambia nada en `api`: Flux aplica lo mismo y no hay diff.
+Si usan image automation, cada `ImageUpdateAutomation` con su `update.path` (`./apps/api/deploy`).
+
 Baja: borrar `tenants/mi-app.yaml` y su línea en `tenants/kustomization.yaml`. `prune` borra todo lo del namespace.
 
 ## Qué puede hacer un tenant

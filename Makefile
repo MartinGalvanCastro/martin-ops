@@ -36,10 +36,12 @@ flux-verify:
 	$(KUBECTL) get helmreleases -A
 
 # Alta de una app de otro repo: make tenant NAME=mi-app REPO=https://github.com/OWNER/mi-app
+# Monorepo: un tenant por app, mismo REPO y DIR distinto (DIR=./apps/api/deploy).
+DIR ?= ./deploy
 tenant:
 	@[ -n "$(NAME)" ] && [ -n "$(REPO)" ] || { echo "Uso: make tenant NAME=<app> REPO=<url>" >&2; exit 1; }
 	@[ ! -e tenants/$(NAME).yaml ] || { echo "tenants/$(NAME).yaml ya existe" >&2; exit 1; }
-	sed -e 's#__NAME__#$(NAME)#g' -e 's#__REPO__#$(REPO)#g' docs/tenant-template.yaml > tenants/$(NAME).yaml
+	sed -e 's#__NAME__#$(NAME)#g' -e 's#__REPO__#$(REPO)#g' -e 's#__DIR__#$(DIR)#g' docs/tenant-template.yaml > tenants/$(NAME).yaml
 	sed -i 's/^resources: \[\]$$/resources:/' tenants/kustomization.yaml
 	echo "  - $(NAME).yaml" >> tenants/kustomization.yaml
 	kubectl kustomize tenants > /dev/null && echo "OK: revisa tenants/$(NAME).yaml, commit y push"

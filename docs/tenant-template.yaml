@@ -74,7 +74,7 @@ metadata:
   namespace: __NAME__
 spec:
   interval: 10m
-  path: ./deploy
+  path: __DIR__
   prune: true
   sourceRef:
     kind: GitRepository
