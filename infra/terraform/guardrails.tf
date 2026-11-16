@@ -9,8 +9,10 @@ resource "oci_limits_quota" "always_free_only" {
   statements = [
     "zero compute-core quota /*/ in tenancy",
     "set compute-core quota standard-a1-core-count to 4 in tenancy",
+    "set compute-core quota standard-a1-core-regional-count to 4 in tenancy",
     "zero compute-memory quota /*/ in tenancy",
     "set compute-memory quota standard-a1-memory-count to 24 in tenancy",
+    "set compute-memory quota standard-a1-memory-regional-count to 24 in tenancy",
     "set block-storage quota total-storage-gb to 200 in tenancy",
   ]
 }
